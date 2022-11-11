@@ -1,0 +1,2 @@
+# RustyMines
+Minesweeper clone
