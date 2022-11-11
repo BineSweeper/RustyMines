@@ -14,7 +14,7 @@ fn main() {
         println!("  Custom - You specify the board size and mine count");
         let mut level = String::new();
         std::io::stdin().read_line(&mut level).expect("Failed to read line");
-        level = level.trim().to_string();
+        level = level.trim().to_ascii_lowercase().to_string();
         if level == "exit" {
             break;
         }
@@ -34,25 +34,16 @@ fn main() {
             let mut width_str = String::new();
             std::io::stdin().read_line(&mut width_str).expect("Failed to read line");
             width_str = width_str.trim().to_string();
-            if width_str == "exit" {
-                break;
-            }
             width = width_str.parse::<i32>().expect("Failed to parse width");
             println!("Please enter the height of the board:");
             let mut height_str = String::new();
             std::io::stdin().read_line(&mut height_str).expect("Failed to read line");
             height_str = height_str.trim().to_string();
-            if height_str == "exit" {
-                break;
-            }
             height = height_str.parse::<i32>().expect("Failed to parse height");
             println!("Please enter the mine count:");
             let mut mine_count_str = String::new();
             std::io::stdin().read_line(&mut mine_count_str).expect("Failed to read line");
             mine_count_str = mine_count_str.trim().to_string();
-            if mine_count_str == "exit" {
-                break;
-            }
             mine_count = mine_count_str.parse::<i32>().expect("Failed to parse mine count");
         } else {
             width = 9;
@@ -62,7 +53,7 @@ fn main() {
 
         let mut game = game::Game::new(width, height, mine_count);
 
-        while !game.is_lost && game.is_won {
+        loop {
             println!("\u{001B}[2J");
             println!("RustyMines");
             game.print_board();
@@ -74,8 +65,8 @@ fn main() {
                 break;
             }
             let coords: Vec<&str> = coords.split(' ').collect();
-            let x = coords[0].parse::<i32>().expect("Failed to parse x");
-            let y = coords[1].parse::<i32>().expect("Failed to parse y");
+            let x = coords[1].parse::<i32>().expect("Failed to parse x");
+            let y = coords[0].parse::<i32>().expect("Failed to parse y");
             game.reveal(x, y);
             game.check_win();
             if game.is_won || game.is_lost {
@@ -85,7 +76,7 @@ fn main() {
                 println!("Time taken: {} seconds", game.start_time.elapsed().as_secs());
                 if game.is_won {
                     println!("You won!");
-                } else {
+                } else if game.is_lost {
                     println!("You lost!");
                 }
                 println!("Press enter to continue...");

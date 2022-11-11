@@ -1,6 +1,8 @@
 use std::cmp::{max, min};
 use std::time::Instant;
 use rand::distributions::{Distribution, Uniform};
+use rand::{Rng, thread_rng};
+use crate::slot::Slot;
 
 pub(crate) struct Game {
     pub width: i32,
@@ -32,14 +34,15 @@ impl Game {
             game.slots.push(row);
         }
 
-        let mut rng = rand::thread_rng();
-        let die = Uniform::from(0..10);
+        let mut rng = thread_rng();
+        let width_uniform = Uniform::from(0..width);
+        let height_uniform = Uniform::from(0..height);
 
         let mut placed_mines = 0;
 
         loop {
-            let x = die.sample(&mut rng);
-            let y = die.sample(&mut rng);
+            let x = width_uniform.sample(&mut rng);
+            let y = height_uniform.sample(&mut rng);
 
             if !game.slots[y as usize][x as usize].is_mine {
                 game.slots[y as usize][x as usize].set_mine();
@@ -51,13 +54,22 @@ impl Game {
             }
         }
 
+        for y in 0..height {
+            for x in 0..width {
+                if game.slots[y as usize][x as usize].is_mine {
+                    for y2 in max(0, y - 1)..=min(height - 1, y + 1) {
+                        for x2 in max(0, x - 1)..=min(width - 1, x + 1) {
+                            game.slots[y2 as usize][x2 as usize].mine_count += 1
+                        }
+                    }
+                }
+            }
+        }
+
         game
     }
 
     pub fn check_win(&mut self) {
-        if self.is_lost || self.is_won {
-            return;
-        }
         let mut revealed_slots = 0;
         for row in &self.slots {
             for slot in row {
@@ -94,36 +106,35 @@ impl Game {
                     }
                 }
             }
-            self.end_time = Some(Instant::now());
         }
 
         if self.slots[y as usize][x as usize].is_blank() {
-            for y2 in max(0, y - 1)..=min(height - 1, y + 1) {
-                for x2 in max(0, x - 1)..=min(width - 1, x + 1) {
-                    reveal(x2, y2);
+            for y2 in max(0, y - 1)..=min(self.height - 1, y + 1) {
+                for x2 in max(0, x - 1)..=min(self.width - 1, x + 1) {
+                    self.reveal(x2, y2);
                 }
             }
         }
     }
 
     pub fn print_board(&self) {
-        print("  ");
+        print!("  ");
         for x in 0..self.width {
-            print("{} ", x);
+            print!("{} ", x);
             if x < 10 && self.width >= 10 {
-                print(" ");
+                print!(" ");
             }
         }
         println!();
         for y in 0..self.height {
-            print("{} ", y);
+            print!("{} ", y);
             if y < 10 && self.height >= 10 {
-                print(" ");
+                print!(" ");
             }
             for x in 0..self.width {
-                print("{} ", self.slots[y as usize][x as usize].description());
+                print!("{} ", self.slots[y as usize][x as usize].description());
                 if self.width >= 10 {
-                    print(" ");
+                    print!(" ");
                 }
             }
             println!();
